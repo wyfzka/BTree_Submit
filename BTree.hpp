@@ -4,16 +4,16 @@
 #include "exception.hpp"
 #include <cstdio>
 namespace sjtu {
-	//B+Ê÷Ë÷Òı´æ´¢µØÖ·
+	//B+æ ‘ç´¢å¼•å­˜å‚¨åœ°å€
 	constexpr char BPTREE_ADDRESS[128] = "mybptree.sjtu";
 	template <class Key, class Value, class Compare = std::less<Key> >
 	class BTree {
 	private:
 		// Your private members go here
-		//¿éÍ·
+		//å—å¤´
 		class Block_Head {
 		public:
-			//´æ´¢ÀàĞÍ(0ÆÕÍ¨ 1Ò¶×Ó)
+			//å­˜å‚¨ç±»å‹
 			bool block_type = false;
 			off_t size = 0;
 			off_t pos = 0;
@@ -22,38 +22,38 @@ namespace sjtu {
 			off_t next = 0;
 		};
 		
-		//Ë÷ÒıÊı¾İ
+		//ç´¢å¼•æ•°æ®
 		struct Normal_Data_Node {
 			off_t child = 0;
 			Key key;
 		};
 
-		//B+Ê÷´óÊı¾İ¿é´óĞ¡
+		//B+æ ‘å¤§æ•°æ®å—å¤§å°
 		constexpr static off_t BLOCK_SIZE = 4096;
-		//´óÊı¾İ¿éÔ¤ÁôÊı¾İ¿é´óĞ¡
+		//å¤§æ•°æ®å—é¢„ç•™æ•°æ®å—å¤§å°
 		constexpr static off_t INIT_SIZE = sizeof(Block_Head);
-		//KeyÀàĞÍµÄ´óĞ¡
+		//Keyç±»å‹çš„å¤§å°
 		constexpr static off_t KEY_SIZE = sizeof(Key);
-		//ValueÀàĞÍµÄ´óĞ¡
+		//Valueç±»å‹çš„å¤§å°
 		constexpr static off_t VALUE_SIZE = sizeof(Value);
-		//´óÊı¾İ¿éÄÜ¹»´æ´¢º¢×ÓµÄ¸öÊı(M)
+		//å¤§æ•°æ®å—èƒ½å¤Ÿå­˜å‚¨å­©å­çš„ä¸ªæ•°(M)
 		constexpr static off_t BLOCK_KEY_NUM = (BLOCK_SIZE - INIT_SIZE) / sizeof(Normal_Data_Node) - 1;
-		//Ğ¡Êı¾İ¿éÄÜ¹»´æ·ÅµÄ¼ÇÂ¼µÄ¸öÊı(L)
+		//å°æ•°æ®å—èƒ½å¤Ÿå­˜æ”¾çš„è®°å½•çš„ä¸ªæ•°(L)
 		constexpr static off_t BLOCK_PAIR_NUM = (BLOCK_SIZE - INIT_SIZE) / (KEY_SIZE + VALUE_SIZE) - 1;
 
-		//Ë½ÓĞÀà
-		//B+Ê÷ÎÄ¼şÍ·
+		//ç§æœ‰ç±»
+		//B+æ ‘æ–‡ä»¶å¤´
 		class File_Head {
 		public:
-			//´æ´¢BLOCKÕ¼ÓÃµÄ¿Õ¼ä
+			//å­˜å‚¨BLOCKå ç”¨çš„ç©ºé—´
 			off_t block_cnt = 1;
-			//´æ´¢¸ù½ÚµãµÄÎ»ÖÃ
+			//å­˜å‚¨æ ¹èŠ‚ç‚¹çš„ä½ç½®
 			off_t root_pos = 0;
-			//´æ´¢Êı¾İ¿éÍ·
+			//å­˜å‚¨æ•°æ®å—å¤´
 			off_t data_block_head = 0;
-			//´æ´¢Êı¾İ¿éÎ²
+			//å­˜å‚¨æ•°æ®å—å°¾
 			off_t data_block_rear = 0;
-			//´æ´¢´óĞ¡
+			//å­˜å‚¨å¤§å°
 			off_t size = 0;
 		};
 
@@ -62,28 +62,28 @@ namespace sjtu {
 			Normal_Data_Node val[BLOCK_KEY_NUM];
 		};
 
-		//Ò¶×ÓÊı¾İ
+		//å¶å­æ•°æ®
 		class Leaf_Data {
 		public:
 			pair<Key, Value> val[BLOCK_PAIR_NUM];
 		};
 
-		//Ë½ÓĞ±äÁ¿
-		//ÎÄ¼şÍ·
+		//ç§æœ‰å˜é‡
+		//æ–‡ä»¶å¤´
 		File_Head tree_data;
 
-		//ÎÄ¼şÖ¸Õë
+		//æ–‡ä»¶æŒ‡é’ˆ
 		static FILE* fp;
 
-		//Ë½ÓĞº¯Êı
-		//¿éÄÚ´æ¶ÁÈ¡
+		//ç§æœ‰å‡½æ•°
+		//å—å†…å­˜è¯»å–
 		template <class MEM_TYPE>
 		static void mem_read(MEM_TYPE buff, off_t buff_size, off_t pos) {
 			fseek(fp, long(buff_size * pos), SEEK_SET);
 			fread(buff, buff_size, 1, fp);
 		}
 
-		//¿éÄÚ´æĞ´Èë
+		//å—å†…å­˜å†™å…¥
 		template <class MEM_TYPE>
 		static void mem_write(MEM_TYPE buff, off_t buff_size, off_t pos) {
 			fseek(fp, long(buff_size * pos), SEEK_SET);
@@ -91,7 +91,7 @@ namespace sjtu {
 			fflush(fp);
 		}
 
-		//Ğ´ÈëB+Ê÷»ù±¾Êı¾İ
+		//å†™å…¥B+æ ‘åŸºæœ¬æ•°æ®
 		void write_tree_data() {
 			fseek(fp, 0, SEEK_SET);
 			char buff[BLOCK_SIZE] = { 0 };
@@ -99,7 +99,7 @@ namespace sjtu {
 			mem_write(buff, BLOCK_SIZE, 0);
 		}
 
-		//»ñÈ¡ĞÂÄÚ´æ
+		//è·å–æ–°å†…å­˜
 		off_t memory_allocation() {
 			++tree_data.block_cnt;
 			write_tree_data();
@@ -108,7 +108,7 @@ namespace sjtu {
 			return tree_data.block_cnt - 1;
 		}
 
-		//´´½¨ĞÂµÄË÷Òı½áµã
+		//åˆ›å»ºæ–°çš„ç´¢å¼•ç»“ç‚¹
 		off_t create_normal_node(off_t parent) {
 			auto node_pos = memory_allocation();
 			Block_Head temp;
@@ -121,7 +121,7 @@ namespace sjtu {
 			return node_pos;
 		}
 
-		//´´½¨ĞÂµÄÒ¶×Ó½áµã
+		//åˆ›å»ºæ–°çš„å¶å­ç»“ç‚¹
 		off_t create_leaf_node(off_t parent, off_t last, off_t next) {
 			auto node_pos = memory_allocation();
 			Block_Head temp;
@@ -136,7 +136,7 @@ namespace sjtu {
 			return node_pos;
 		}
 	
-		//Ë÷Òı½Úµã²åÈëĞÂË÷Òı
+		//ç´¢å¼•èŠ‚ç‚¹æ’å…¥æ–°ç´¢å¼•
 		void insert_new_index(Block_Head& parent_info, Normal_Data& parent_data, 
 			off_t origin, off_t new_pos, const Key& new_index) {
 			++parent_info.size;
@@ -150,7 +150,7 @@ namespace sjtu {
 			parent_data.val[p + 1].child = new_pos;
 		}
 
-		//¶ÁÈ¡½áµãĞÅÏ¢
+		//è¯»å–ç»“ç‚¹ä¿¡æ¯
 		template <class DATA_TYPE>
 		static void read_block(Block_Head* info, DATA_TYPE* data, off_t pos)
 		{
@@ -159,7 +159,7 @@ namespace sjtu {
 			memcpy(info, buff, sizeof(Block_Head));
 			memcpy(data, buff + INIT_SIZE, sizeof(DATA_TYPE));
 		}
-		//Ğ´Èë½ÚµãĞÅÏ¢
+		//å†™å…¥èŠ‚ç‚¹ä¿¡æ¯
 		template <class DATA_TYPE>
 		static void write_block(Block_Head* info, DATA_TYPE* data, off_t pos) {
 			char buff[BLOCK_SIZE] = { 0 };
@@ -168,10 +168,10 @@ namespace sjtu {
 			mem_write(buff, BLOCK_SIZE, pos);
 		}
 
-		//´´½¨ÎÄ¼ş
+		//åˆ›å»ºæ–‡ä»¶
 		void check_file() {
 			if (!fp) {
-				//´´½¨ĞÂµÄÊ÷
+				//åˆ›å»ºæ–°çš„æ ‘
 				fp = fopen(BPTREE_ADDRESS, "wb+");
 				write_tree_data();
 
@@ -192,16 +192,16 @@ namespace sjtu {
 		}
 		
 		
-		//·ÖÁÑÒ¶×Ó½áµã
+		//åˆ†è£‚å¶å­ç»“ç‚¹
 		Key split_leaf_node(off_t pos, Block_Head& origin_info, Leaf_Data& origin_data) {
-			//¶ÁÈëÊı¾İ
+			//è¯»å…¥æ•°æ®
 			off_t parent_pos;
 			Block_Head parent_info;
 			Normal_Data parent_data;
 
-			//ÅĞ¶ÏÊÇ·ñÎª¸ù½áµã
+			//åˆ¤æ–­æ˜¯å¦ä¸ºæ ¹ç»“ç‚¹
 			if (pos == tree_data.root_pos) {
-				//´´½¨¸ù½Úµã
+				//åˆ›å»ºæ ¹èŠ‚ç‚¹
 				auto root_pos = create_normal_node(0);
 				tree_data.root_pos = root_pos;
 				write_tree_data();
@@ -219,10 +219,10 @@ namespace sjtu {
 				parent_pos = origin_info.parent;
 				read_block(&parent_info, &parent_data, parent_pos);
 			}
-			//´´½¨Ò»¸öĞÂµÄ×Ó½áµã
+			//åˆ›å»ºä¸€ä¸ªæ–°çš„å­ç»“ç‚¹
 			auto new_pos = create_leaf_node(parent_pos,pos,origin_info.next);
 			
-			//ĞŞ¸Äºó¼Ì½áµãµÄÇ°Çı
+			//ä¿®æ”¹åç»§ç»“ç‚¹çš„å‰é©±
 			auto tmp_pos = origin_info.next;
 			Block_Head tmp_info;
 			Leaf_Data tmp_data;
@@ -235,7 +235,7 @@ namespace sjtu {
 			Leaf_Data new_data;
 			read_block(&new_info, &new_data, new_pos);
 
-			//ÒÆ¶¯Êı¾İµÄÎ»ÖÃ
+			//ç§»åŠ¨æ•°æ®çš„ä½ç½®
 			off_t mid_pos = origin_info.size >> 1;
 			for (off_t p = mid_pos, i = 0; p < origin_info.size; ++p, ++i) {
 				new_data.val[i].first = origin_data.val[p].first;
@@ -245,7 +245,7 @@ namespace sjtu {
 			origin_info.size = mid_pos;
 			insert_new_index(parent_info, parent_data, pos, new_pos, origin_data.val[mid_pos].first);
 
-			//Ğ´Èë
+			//å†™å…¥
 			write_block(&origin_info, &origin_data, pos);
 			write_block(&new_info, &new_data, new_pos);
 			write_block(&parent_info, &parent_data, parent_pos);
@@ -253,9 +253,9 @@ namespace sjtu {
 			return new_data.val[0].first;
 		}
 
-		//·ÖÁÑ¸¸Ç×£¨·µ»ØĞÂµÄ¸¸Ç×£©
+		//åˆ†è£‚çˆ¶äº²ï¼ˆè¿”å›æ–°çš„çˆ¶äº²ï¼‰
 		bool split_parent(Block_Head& child_info) {
-			//¶ÁÈëÊı¾İ
+			//è¯»å…¥æ•°æ®
 			off_t parent_pos, origin_pos = child_info.parent;
 			Block_Head parent_info, origin_info;
 			Normal_Data parent_data, origin_data;
@@ -263,9 +263,9 @@ namespace sjtu {
 			if (origin_info.size < BLOCK_KEY_NUM)
 				return false;
 
-			//ÅĞ¶ÏÊÇ·ñÎª¸ù½áµã
+			//åˆ¤æ–­æ˜¯å¦ä¸ºæ ¹ç»“ç‚¹
 			if (origin_pos == tree_data.root_pos) {
-				//´´½¨¸ù½Úµã
+				//åˆ›å»ºæ ¹èŠ‚ç‚¹
 				auto root_pos = create_normal_node(0);
 				tree_data.root_pos = root_pos;
 				write_tree_data();
@@ -283,13 +283,13 @@ namespace sjtu {
 				parent_pos = origin_info.parent;
 				read_block(&parent_info, &parent_data, parent_pos);
 			}
-			//´´½¨Ò»¸öĞÂµÄ×Ó½áµã
+			//åˆ›å»ºä¸€ä¸ªæ–°çš„å­ç»“ç‚¹
 			auto new_pos = create_normal_node(parent_pos);
 			Block_Head new_info;
 			Normal_Data new_data;
 			read_block(&new_info, &new_data, new_pos);
 
-			//ÒÆ¶¯Êı¾İµÄÎ»ÖÃ
+			//ç§»åŠ¨æ•°æ®çš„ä½ç½®
 			off_t mid_pos = origin_info.size >> 1;
 			for (off_t p = mid_pos + 1, i = 0; p < origin_info.size; ++p,++i) {
 				if (origin_data.val[p].child == child_info.pos) {
@@ -301,14 +301,14 @@ namespace sjtu {
 			origin_info.size = mid_pos + 1;
 			insert_new_index(parent_info, parent_data, origin_pos, new_pos, origin_data.val[mid_pos].key);
 			
-			//Ğ´Èë
+			//å†™å…¥
 			write_block(&origin_info, &origin_data, origin_pos);
 			write_block(&new_info, &new_data, new_pos);
 			write_block(&parent_info, &parent_data, parent_pos);
 			return true;
 		}
 
-		//ºÏ²¢Ë÷Òı
+		//åˆå¹¶ç´¢å¼•
 		void merge_normal(Block_Head& l_info, Normal_Data& l_data, Block_Head& r_info, Normal_Data& r_data) {
 			for (off_t p = l_info.size, i = 0; i < r_info.size; ++p, ++i) {
 				l_data.val[p] = r_data.val[i];
@@ -316,218 +316,6 @@ namespace sjtu {
 			l_data.val[l_info.size - 1].key = adjust_normal(r_info.parent, r_info.pos);
 			l_info.size += r_info.size;
 			write_block(&l_info, &l_data, l_info.pos);
-		}
-		//ĞŞ¸ÄLCAµÄË÷Òı(Æ½ºâÒ¶×ÓÊ±)
-		void change_index(off_t parent, off_t child, const Key& new_key) {
-			//¶ÁÈ¡Êı¾İ
-			Block_Head parent_info;
-			Normal_Data parent_data;
-			read_block(&parent_info, &parent_data, parent);
-			if (parent_data.val[parent_info.size - 1].child == child) {
-				change_index(parent_info.parent, parent, new_key);
-				return;
-			}
-			off_t cur_pos = parent_info.size - 2;
-			while (true) {
-				if (parent_data.val[cur_pos].child == child) {
-					parent_data.val[cur_pos].key = new_key;
-					break;
-				}
-				--cur_pos;
-			}
-			write_block(&parent_info, &parent_data, parent);
-		}
-
-		//Æ½ºâË÷Òı
-		void balance_normal(Block_Head& info, Normal_Data& normal_data) {
-			if (info.size >= BLOCK_KEY_NUM / 2) {
-				write_block(&info, &normal_data, info.pos);
-				return;
-			}
-			//ÅĞ¶ÏÊÇ·ñÊÇ¸ù
-			if (info.pos == tree_data.root_pos && info.size <= 1) {
-				tree_data.root_pos = normal_data.val[0].child;
-				write_tree_data();
-				return;
-			}
-			else if (info.pos == tree_data.root_pos) {
-				write_block(&info, &normal_data, info.pos);
-				return;
-			}
-			//»ñÈ¡ĞÖµÜ
-			Block_Head parent_info, brother_info;
-			Normal_Data parent_data, brother_data;
-			read_block(&parent_info, &parent_data, info.parent);
-			off_t value_pos;
-			for (value_pos = 0; parent_data.val[value_pos].child != info.pos; ++value_pos);
-			if (value_pos > 0) {
-				read_block(&brother_info, &brother_data, parent_data.val[value_pos - 1].child);
-				brother_info.parent = info.parent;
-				if (brother_info.size > BLOCK_KEY_NUM / 2) {
-					off_t p = info.size;
-					while (p > 0) {
-						normal_data.val[p] = normal_data.val[p - 1];
-						--p;
-					}
-					normal_data.val[0].child = brother_data.val[brother_info.size - 1].child;
-					normal_data.val[0].key = parent_data.val[value_pos - 1].key;
-					parent_data.val[value_pos - 1].key = brother_data.val[brother_info.size - 2].key;
-					--brother_info.size;
-					++info.size;
-					write_block(&brother_info, &brother_data, brother_info.pos);
-					write_block(&info, &normal_data, info.pos);
-					write_block(&parent_info, &parent_data, parent_info.pos);
-					return;
-				}
-				else {
-					merge_normal(brother_info, brother_data, info, normal_data);
-					return;
-				}
-			}
-			if (value_pos < parent_info.size - 1) {
-				read_block(&brother_info, &brother_data, parent_data.val[value_pos + 1].child);
-				brother_info.parent = info.parent;
-				if (brother_info.size > BLOCK_KEY_NUM / 2) {
-					normal_data.val[info.size].child = brother_data.val[0].child;
-					normal_data.val[info.size - 1].key = parent_data.val[value_pos].key;
-					parent_data.val[value_pos].key = brother_data.val[0].key;
-					for (off_t p = 1; p < brother_info.size; ++p) 
-					{
-						brother_data.val[p - 1] = brother_data.val[p];
-					}
-					--brother_info.size;
-					++info.size;
-					write_block(&brother_info, &brother_data, brother_info.pos);
-					write_block(&info, &normal_data, info.pos);
-					write_block(&parent_info, &parent_data, parent_info.pos);
-					return;
-				}
-				else {
-					merge_normal(info, normal_data, brother_info, brother_data);
-					return;
-				}
-			}
-		}
-
-		//µ÷ÕûË÷Òı(·µ»Ø¹Ø¼ü×Ö)
-		Key adjust_normal(off_t pos, off_t removed_child) {
-			Block_Head info;
-			Normal_Data normal_data;
-			read_block(&info, &normal_data, pos);
-			off_t cur_pos;
-			for (cur_pos = 0; normal_data.val[cur_pos].child != removed_child; ++cur_pos);
-			Key ans = normal_data.val[cur_pos - 1].key;
-			normal_data.val[cur_pos - 1].key = normal_data.val[cur_pos].key;
-			while(cur_pos < info.size - 1)
-			{
-				normal_data.val[cur_pos] = normal_data.val[cur_pos + 1];
-				++cur_pos;
-			}
-			--info.size;
-			balance_normal(info, normal_data);
-			return ans;
-		}
-
-		//ºÏ²¢Ò¶×Ó
-		void merge_leaf(Block_Head& l_info, Leaf_Data& l_data, Block_Head& r_info, Leaf_Data& r_data) {
-			for (off_t p = l_info.size, i = 0; i < r_info.size; ++p, ++i) {
-				l_data.val[p].first = r_data.val[i].first;
-				l_data.val[p].second = r_data.val[i].second;
-			}
-			l_info.size += r_info.size;
-			adjust_normal(r_info.parent, r_info.pos);
-			//ĞŞ¸ÄÁ´±í
-			l_info.next = r_info.next;
-			Block_Head temp_info;
-			Leaf_Data temp_data;
-			read_block(&temp_info, &temp_data, r_info.next);
-			temp_info.last = l_info.pos;
-			write_block(&temp_info, &temp_data, temp_info.pos);
-			write_block(&l_info, &l_data, l_info.pos);
-		}
-
-		//Æ½ºâÒ¶×Ó
-		void balance_leaf(Block_Head& leaf_info, Leaf_Data& leaf_data) {
-			if (leaf_info.size >= BLOCK_PAIR_NUM / 2) {
-				write_block(&leaf_info, &leaf_data, leaf_info.pos);
-				return;
-			}
-			else if (leaf_info.pos == tree_data.root_pos) {
-				if (leaf_info.size == 0) {
-					Block_Head temp_info;
-					Leaf_Data temp_data;
-					read_block(&temp_info, &temp_data, tree_data.data_block_head);
-					temp_info.next = tree_data.data_block_rear;
-					write_block(&temp_info, &temp_data, tree_data.data_block_head);
-					read_block(&temp_info, &temp_data, tree_data.data_block_rear);
-					temp_info.last = tree_data.data_block_head;
-					write_block(&temp_info, &temp_data, tree_data.data_block_rear);
-					return;
-				}
-				write_block(&leaf_info, &leaf_data, leaf_info.pos);
-				return;
-			}
-			//²éÕÒĞÖµÜ½áµã
-			Block_Head brother_info, parent_info;
-			Leaf_Data brother_data;
-			Normal_Data parent_data;
-
-			read_block(&parent_info, &parent_data, leaf_info.parent);
-			off_t node_pos = 0;
-			while (node_pos < parent_info.size)
-			{
-				if (parent_data.val[node_pos].child == leaf_info.pos)
-					break;
-				++node_pos;
-			}
-		
-			//×óĞÖµÜ
-			if (node_pos > 0) {
-				read_block(&brother_info, &brother_data, leaf_info.last);
-					brother_info.parent = leaf_info.parent;
-					if (brother_info.size > BLOCK_PAIR_NUM / 2) {
-						for (off_t p = leaf_info.size; p > 0; --p) {
-							leaf_data.val[p].first = leaf_data.val[p - 1].first;
-							leaf_data.val[p].second = leaf_data.val[p - 1].second;
-						}
-						leaf_data.val[0].first = brother_data.val[brother_info.size - 1].first;
-						leaf_data.val[0].second = brother_data.val[brother_info.size - 1].second;
-						--brother_info.size;
-						++leaf_info.size;
-						change_index(brother_info.parent, brother_info.pos, leaf_data.val[0].first);
-						write_block(&brother_info, &brother_data, brother_info.pos);
-						write_block(&leaf_info, &leaf_data, leaf_info.pos);
-						return;
-					}
-					else {
-						merge_leaf(brother_info, brother_data, leaf_info, leaf_data);
-						//write_block(&brother_info, &brother_data, brother_info._pos);
-						return;
-					}
-			}
-			//ÓÒĞÖµÜ
-			if (node_pos < parent_info.size - 1) {
-				read_block(&brother_info, &brother_data, leaf_info.next);
-				brother_info.parent = leaf_info.parent;
-				if (brother_info.size > BLOCK_PAIR_NUM / 2) {
-					leaf_data.val[leaf_info.size].first = brother_data.val[0].first;
-					leaf_data.val[leaf_info.size].second = brother_data.val[0].second;
-					for (off_t p = 1; p < brother_info.size; ++p) {
-						brother_data.val[p - 1].first = brother_data.val[p].first;
-						brother_data.val[p - 1].second = brother_data.val[p].second;
-					}
-					++leaf_info.size;
-					--brother_info.size;
-					change_index(leaf_info.parent, leaf_info.pos, brother_data.val[0].first);
-					write_block(&leaf_info, &leaf_data, leaf_info.pos);
-					write_block(&brother_info, &brother_data, brother_info.pos);
-					return;
-				}
-				else {
-					merge_leaf(leaf_info, leaf_data, brother_info, brother_data);
-					return;
-				}
-			}
 		}
 
 	public:
@@ -542,11 +330,11 @@ namespace sjtu {
 			friend pair<iterator, OperationResult> sjtu::BTree<Key, Value, Compare>::insert(const Key&, const Value&);
 		private:
 			// Your private members go here
-			//Ö¸Ïòµ±Ç°bpt
+			//æŒ‡å‘å½“å‰bpt
 			BTree* cur_bptree = nullptr;
-			//´æ´¢µ±Ç°¿éµÄ»ù±¾ĞÅÏ¢
+			//å­˜å‚¨å½“å‰å—çš„åŸºæœ¬ä¿¡æ¯
 			Block_Head block_info;
-			//´æ´¢µ±Ç°Ö¸ÏòµÄÔªËØÎ»ÖÃ
+			//å­˜å‚¨å½“å‰æŒ‡å‘çš„å…ƒç´ ä½ç½®
 			off_t cur_pos = 0;
 
 		public:
@@ -662,9 +450,9 @@ namespace sjtu {
 			friend const_iterator sjtu::BTree<Key, Value, Compare>::find(const Key&) const;
 		private:
 			// Your private members go here
-			//´æ´¢µ±Ç°¿éµÄ»ù±¾ĞÅÏ¢
+			//å­˜å‚¨å½“å‰å—çš„åŸºæœ¬ä¿¡æ¯
 			Block_Head block_info;
-			//´æ´¢µ±Ç°Ö¸ÏòµÄÔªËØÎ»ÖÃ
+			//å­˜å‚¨å½“å‰æŒ‡å‘çš„å…ƒç´ ä½ç½®
 			off_t cur_pos = 0;
 		public:
 			const_iterator() {
@@ -770,7 +558,7 @@ namespace sjtu {
 			// Todo Default
 			fp = fopen(BPTREE_ADDRESS, "rb+");
 			if (!fp) {
-				//´´½¨ĞÂµÄÊ÷
+				//åˆ›å»ºæ–°çš„æ ‘
 				fp = fopen(BPTREE_ADDRESS, "wb+");
 				write_tree_data();
 				
@@ -845,14 +633,14 @@ namespace sjtu {
 				return result;
 			}
 
-			//²éÕÒÕıÈ·µÄ½ÚµãÎ»ÖÃ
+			//æŸ¥æ‰¾æ­£ç¡®çš„èŠ‚ç‚¹ä½ç½®
 			char buff[BLOCK_SIZE] = { 0 };
 			off_t cur_pos = tree_data.root_pos, cur_parent = 0;
 			while (true) {
 				mem_read(buff, BLOCK_SIZE, cur_pos);
 				Block_Head temp;
 				memcpy(&temp, buff, sizeof(temp));
-				//ÅĞ¶Ï¸¸Ç×ÊÇ·ñ¸üĞÂ
+				//åˆ¤æ–­çˆ¶äº²æ˜¯å¦æ›´æ–°
 				if (cur_parent != temp.parent) {
 					temp.parent = cur_parent;
 					memcpy(buff, &temp, sizeof(temp));
@@ -882,7 +670,7 @@ namespace sjtu {
                     return pair<iterator, OperationResult>(end(), Fail);
 				}
 				if (value_pos >= info.size || leaf_data.val[value_pos].first > key) {
-					//ÔÚ´Ë½áµãÖ®Ç°²åÈë
+					//åœ¨æ­¤ç»“ç‚¹ä¹‹å‰æ’å…¥
 					if (info.size >= BLOCK_PAIR_NUM) {
 						auto cur_key = split_leaf_node(cur_pos, info, leaf_data);
 						if (key > cur_key) {
@@ -907,7 +695,7 @@ namespace sjtu {
 					ans.block_info = info;
 					ans.cur_bptree = this;
 					ans.cur_pos = value_pos;
-					//ĞŞ¸ÄÊ÷µÄ»ù±¾²ÎÊı
+					//ä¿®æ”¹æ ‘çš„åŸºæœ¬å‚æ•°
 					++tree_data.size;
 					write_tree_data();
 					pair<iterator, OperationResult> re(ans, Success);
@@ -995,14 +783,14 @@ namespace sjtu {
 			if (empty()) {
 				throw container_is_empty();
 			}
-			//²éÕÒÕıÈ·µÄ½ÚµãÎ»ÖÃ
+			//æŸ¥æ‰¾æ­£ç¡®çš„èŠ‚ç‚¹ä½ç½®
 			char buff[BLOCK_SIZE] = { 0 };
 			off_t cur_pos = tree_data.root_pos, cur_parent = 0;
 			while (true) {
 				mem_read(buff, BLOCK_SIZE, cur_pos);
 				Block_Head temp;
 				memcpy(&temp, buff, sizeof(temp));
-				//ÅĞ¶Ï¸¸Ç×ÊÇ·ñ¸üĞÂ
+				//åˆ¤æ–­çˆ¶äº²æ˜¯å¦æ›´æ–°
 				if (cur_parent != temp.parent) {
 					temp.parent = cur_parent;
 					memcpy(buff, &temp, sizeof(temp));
@@ -1054,14 +842,14 @@ namespace sjtu {
 			if (empty()) {
 				return end();
 			}
-			//²éÕÒÕıÈ·µÄ½ÚµãÎ»ÖÃ
+			//æŸ¥æ‰¾æ­£ç¡®çš„èŠ‚ç‚¹ä½ç½®
 			char buff[BLOCK_SIZE] = { 0 };
 			off_t cur_pos = tree_data.root_pos, cur_parent = 0;
 			while (true) {
 				mem_read(buff, BLOCK_SIZE, cur_pos);
 				Block_Head temp;
 				memcpy(&temp, buff, sizeof(temp));
-				//ÅĞ¶Ï¸¸Ç×ÊÇ·ñ¸üĞÂ
+				//åˆ¤æ–­çˆ¶äº²æ˜¯å¦æ›´æ–°
 				if (cur_parent != temp.parent) {
 					temp.parent = cur_parent;
 					memcpy(buff, &temp, sizeof(temp));
@@ -1103,14 +891,14 @@ namespace sjtu {
 			if (empty()) {
 				return cend();
 			}
-			//²éÕÒÕıÈ·µÄ½ÚµãÎ»ÖÃ
+			//æŸ¥æ‰¾æ­£ç¡®çš„èŠ‚ç‚¹ä½ç½®
 			char buff[BLOCK_SIZE] = { 0 };
 			off_t cur_pos = tree_data.root_pos, cur_parent = 0;
 			while (true) {
 				mem_read(buff, BLOCK_SIZE, cur_pos);
 				Block_Head temp;
 				memcpy(&temp, buff, sizeof(temp));
-				//ÅĞ¶Ï¸¸Ç×ÊÇ·ñ¸üĞÂ
+				//åˆ¤æ–­çˆ¶äº²æ˜¯å¦æ›´æ–°
 				if (cur_parent != temp.parent) {
 					temp.parent = cur_parent;
 					memcpy(buff, &temp, sizeof(temp));
